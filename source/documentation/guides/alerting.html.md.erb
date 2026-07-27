@@ -1,0 +1,59 @@
+---
+title: Alerting
+parent: Guides
+---
+
+# <%= current_page.data.title %>
+
+Alerting follows a hub-and-spoke model so each application account can define alarms locally while notifications are handled centrally.
+
+## Architecture diagram
+```text
+Application AWS account(s)                            Monitoring AWS account
+---------------------------                           ----------------------
+CloudWatch Alarm
+  |
+  v
+Local SNS topic
+  |
+  v
+Relay Lambda ---------------------------------------> Central SNS topic
+                                                         |
+                                                         v
+                                                     Teams Lambda
+                                                         |
+                                                         v
+                                                 Microsoft Teams webhook
+```
+
+This avoids direct Teams webhook integration from every application account and keeps notification routing in one place.
+
+## 1. Account-level alarms
+Each AWS account creates and owns its own CloudWatch alarms.
+
+The standard Terraform module used for this is in the [devops-terraform-standard-alarms](https://github.com/ukhsa-collaboration/devops-terraform-standard-alarms) repository but teams can also create 
+their own alarms and point them at the local SNS topic as the local SNS topic and relay Lambda is managed by AWS Organizations and is available in every account.
+
+## 2. Local account notification and relay
+When an alarm is triggered, CloudWatch publishes to an SNS topic in the same AWS account.
+
+A local relay Lambda subscribes to that SNS topic and forwards messages to a central SNS topic in the monitoring AWS account.
+
+## 3. Central notification
+A central Lambda in the monitoring account subscribes to the central SNS topic and sends the alert to a Microsoft Teams webhook.
+
+The central SNS topic and policy (allowing all AWS accounts in the PHE Organisation to publish) are provisioned through the [devops-phe-alarms-iac](https://github.com/ukhsa-collaboration/devops-phe-alarms-iac) repository.
+
+The central CloudWatch dashboard is also managed in that repository, in the `dashboards` stack.
+
+Implementation and operational documentation for the relay and central Lambda components is available in the [devops-phe-alarms-lambdas](https://github.com/ukhsa-collaboration/devops-phe-alarms-lambdas) repository.
+
+## Example alert flow
+Example: an RDS CPU alarm breaches in an application account.
+
+1. The CloudWatch alarm moves to `ALARM` state.
+2. CloudWatch publishes the alarm notification to the local account SNS topic.
+3. The local relay Lambda receives the SNS message and republishes it to the central SNS topic in the monitoring account.
+4. The central Teams Lambda receives the central SNS message and posts a formatted alert to the configured Teams channel webhook.
+
+This pattern means each product team keeps control of alarm definitions in its own account, while alerting is handled centrally.
