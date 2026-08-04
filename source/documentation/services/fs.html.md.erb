@@ -1,10 +1,100 @@
 ---
 title: Food Scanner
 parent: Services
-last_reviewed_on: 2026-01-29
+last_reviewed_on: 2026-08-04
 review_in: 24 weeks
 ---
 
 # <%= current_page.data.title %>
 
-Food Scanner is an app that allows users to scan food barcodes and log what they've eaten. All three environments (preview, staging, production) follow the same pattern with traffic entering through an ALB and the containerised app running on an EC2 instance.
+Food Scanner is an app that allows users to scan food barcodes and log what they have eaten. Both environments (staging and production) follow the same pattern, with traffic entering through an Application Load Balancer (ALB) and the containerised app running on Amazon Elastic Container Service (ECS).
+
+The app is branded as "Food Scanner" in app stores and in the app itself, but some internal references still use "Change4Life".
+
+## Architecture
+
+![Food Scanner architecture diagram](/images/foodscanner-diagram.jpg)
+
+Food Scanner is broader than a single mobile app and CMS. The product catalogue and swap data are assembled by a small set of supporting services which are documented below.
+
+The CMS stores app content, product overrides, and the imported product and swap tables used by the app. Of the back-office services described here, it is the only one that handles user-facing traffic, but it relies on the other services to provide the data it needs.
+
+The Brandbank extractor pulls product data from the Brandbank API, and the Brandbank transformer normalises that data into the Food Scanner product format.
+The FoodSwitch transformer does the same for CSV files.
+The import engine merges those feeds, applies CMS-managed rules, and produces a `products.json` file consumed by the compute engine.
+The compute engine calculates swap recommendations and produces a `swaps_output.json` file consumed by the CMS.
+
+The CMS follows the [standard pattern](documentation/guides/standard-pattern) for user-facing traffic, but the back-office data pipeline is more involved than most other mobile apps.
+
+### CMS
+
+- Product data is not entered manually at scale. Instead, an import job loads `products.json` and `swaps_output.json` from S3 into buffer tables and then rotates those tables into the live `products` and `swaps` tables. This reduces the time the live dataset is unavailable during refreshes.
+- The CMS also contains two built-in hidden food sources called `Low Priority` and `High Priority`. These are used for product fillers and manual overrides when administrators need to correct or supplement upstream data.
+
+The CMS interacts with three S3 buckets instead of a single one.
+
+The CMS can trigger an import by calling a separate import-service endpoint and also exposes health checks for supporting services.
+
+### Compute engine
+
+The compute engine is a short-lived batch worker that calculates swap recommendations from the current product feed.
+
+- On startup it downloads `products.json` from S3.
+- That input file contains both the current import job metadata and the product list. The compute engine splits those into local `job.json` and `products.json` files.
+- It maps the current CMS product schema into the older schema still expected by the swaps library and writes `swaps_input.json`.
+- It generates swap recommendations in parallel, post-processes the per-process output files, and writes a final `swaps_output.json`.
+- It uploads `swaps_output.json` back to S3 and updates the CMS import job status as it moves through `calculating_swaps`, `compute_exporting`, and finally `cms_importing`.
+
+This means the compute engine does not produce the CMS product feed. It consumes the product feed produced elsewhere, calculates the swaps dataset from it, and publishes only the swaps output needed for the next CMS import step.
+
+### Brandbank extractor
+
+The Brandbank extractor is the upstream ingestion service for the Brandbank feed.
+
+- It connects to the Brandbank API and retrieves product data.
+- It writes the raw response to `data/products/{outputFileName}`.
+- It uses the `categorizer` to run machine-learning categorisation for new products and exports the categorised product list to S3.
+
+The [`categorizer` source code](https://github.com/ukhsa-collaboration/foodscanner-brandbank-machine-learning) is available on GitHub.
+
+This service is responsible for collecting and staging Brandbank data. It does not expose the final CMS-facing product feed itself.
+
+### Brandbank transformer
+
+The Brandbank transformer consumes the extractor output and normalises it into the format imported by Food Scanner.
+
+- It reads the extractor output from S3.
+- It cleans and normalises the records into the Food Scanner specification.
+- It stores the transformed records into a PostgreSQL database.
+- It generates a `products.json` which is then exposed through a Flask API via `GET /api/products`.
+
+The `GET /api/products` endpoint is behind an internal ALB and is not directly accessible from the public internet. It is only used by the import engine to retrieve the transformed product feed.
+
+### Meilisearch
+
+The CMS uses Meilisearch for the application's search functionality and connects to it using the `MEILISEARCH_URL` environment variable.
+
+### Import engine
+
+The import engine is the orchestration layer between upstream food-source services, the CMS, and the compute engine.
+
+- The CMS creates an import job and calls the import engine through the configured `CREATE_IMPORT_ENDPOINT`.
+- The import engine stores that job locally and picks it up for processing.
+- It retrieves the configured food sources from the CMS, fetches each source in priority order, and merges the products into its PostgreSQL database.
+- It then applies CMS-managed traffic-light rules, nutrition rules, autoremove rules, and badge rules to the merged product set.
+- After processing, it exports a `products.json` file to S3. That file contains both the current import job metadata and the final merged product list.
+- It then starts the compute EC2 instance so the compute engine can download that `products.json`, calculate swaps, and upload `swaps_output.json`.
+- Once the compute engine has uploaded `swaps_output.json` and moved the CMS job to `cms_importing`, the CMS-side import command downloads both `products.json` and `swaps_output.json` from S3, populates buffer tables, and rotates those tables into place.
+
+### FoodSwitch transformer
+
+FoodSwitch is another upstream transformer. Unlike Brandbank, it works from CSV files rather than a supplier API feed.
+
+- The service exposes a dedicated CSV upload endpoint.
+- The transformer processes CSV source files from S3 into the Food Scanner open product format and writes the normalised product records into a PostgreSQL database.
+- The data is exposed via an internal API at `GET /api/products/`.
+
+The service also exposes:
+
+- `POST /api/csv-upload` for receiving CSV files
+- `GET /api/ping` for health checks
