@@ -21,7 +21,7 @@ Monolithic Terraform states are avoided by splitting code into _stacks_. A stack
 
 In the example below, `backend`, `database`, `network`, and `bootstrap` are stacks.
 
-```.
+```
 ├── applications
 │   ├── backend
 │   │   ├── backend.tf
@@ -134,7 +134,7 @@ There’s no one-size-fits-all approach to organising Terraform stacks. The goal
 
 In general, try to group related infrastructure (e.g. networking, compute, storage) into standalone stacks, isolate application deployments into their own stacks (e.g. frontend, backend) unless they are very tightly coupled and avoid creating overly granular stacks that add complexity without meaningful isolation benefits.
 
-### I have a Stack (Stack X) that depends on a resource in another Stack (Stack Y). How do I ensure that the resource in Stack X gets created before Stack Y?
+### I have a stack (Stack X) that depends on a resource in another stack (Stack Y). How do I ensure that the resource in Stack Y gets created before Stack X?
 Use the `dependencies.json` file inside Stack X to declare Stack Y as a dependency. For example:
 
 ```json
