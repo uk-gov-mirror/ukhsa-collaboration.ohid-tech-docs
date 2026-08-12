@@ -1,7 +1,7 @@
 ---
 title: Active 10
 parent: Services
-last_reviewed_on: 2026-01-29
+last_reviewed_on: 2026-08-12
 review_in: 24 weeks
 ---
 
@@ -65,5 +65,3 @@ Both domains are registered in the phe-prd AWS account. The authoritative name s
 **Note:** In production, iOS and Android use different CMS domains even though they point to the same CMS. The historical reason for this split has not been confirmed.
 
 Each environment (account) manages its own hosted zone via Terraform.
-
-If zones are recreated for any reason, the corresponding NS records must be updated in the phe-prd account to point to the new name servers of the environment-specific hosted zone.

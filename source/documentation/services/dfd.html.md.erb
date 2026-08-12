@@ -1,7 +1,7 @@
 ---
 title: Drink Free Days
 parent: Services
-last_reviewed_on: 2026-01-29
+last_reviewed_on: 2026-08-12
 review_in: 24 weeks
 ---
 
@@ -15,25 +15,7 @@ The app follows the [standard pattern](documentation/guides/standard-pattern).
 
 ## Architecture Overview
 
-```mermaid
-graph TD;
-    User[Mobile App]
-    ALB[Application Load Balancer]
-    Backend[ECS - Drink Free Days CMS]
-    NHSLogin[ECS - NHS Login Backend]
-    RDS[Aurora PostgreSQL]
-    Redis[Elasticache Redis]
-    MediaCloudfront[Static assets Cloudfront]
-    MediaS3[S3 Media Bucket]
-    NHSAuth[NHS Login / PDS APIs]
-
-    User --> ALB --> Backend --> RDS
-    User --> MediaCloudfront --> MediaS3
-    Backend --> MediaS3
-    ALB --> NHSLogin --> RDS
-    NHSLogin --> Redis
-    NHSLogin --> NHSAuth
-```
+![Standard pattern architecture](/images/standard-pattern-architecture.png)
 
 ---
 
@@ -71,48 +53,3 @@ Subdomains:
 
 - drinkfreedays-dev.phedigital.co.uk / -staging / -prod – Primary ALB entrypoints for each environment.
 - dev.quitsmoking.betterhealthapps.com / staging / prod – NHS Login backend endpoints.
-
-```mermaid
-graph TD
-  subgraph PHE_PRD[phe-prd account]
-    PHE[phedigital.co.uk]
-    BHA[betterhealthapps.com]
-  end
-
-  subgraph DEV_ACC[dev account]
-    DEV_API[dfd-dev.phedigital.co.uk]
-    DEV_NHS[dev.quitsmoking.betterhealthapps.com]
-    ALB_DEV[ALB - dev]
-  end
-
-  subgraph STG_ACC[staging account]
-    STG_API[dfd-pre-stg.phedigital.co.uk]
-    STG_NHS[staging.quitsmoking.betterhealthapps.com]
-    ALB_STG[ALB - staging]
-  end
-
-  subgraph PRD_ACC[prd account]
-    PRD_API[dfd-prod-cms.phedigital.co.uk]
-    PRD_NHS[prod.quitsmoking.betterhealthapps.com]
-    ALB_PRD[ALB - prod]
-  end
-
-  PHE -->|NS| DEV_API
-  PHE -->|NS| STG_API
-  PHE -->|NS| PRD_API
-
-  BHA -->|NS| DEV_NHS
-  BHA -->|NS| STG_NHS
-  BHA -->|NS| PRD_NHS
-
-  DEV_API --> ALB_DEV
-  DEV_NHS --> ALB_DEV
-
-  STG_API --> ALB_STG
-  STG_NHS --> ALB_STG
-
-  PRD_API --> ALB_PRD
-  PRD_NHS --> ALB_PRD
-```
-
-If any hosted zone is recreated, be sure to refresh the glue/NS records in the phe-prd root zones so the delegation chain stays healthy.
