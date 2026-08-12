@@ -1,6 +1,8 @@
 ---
 title: Quit Smoking
 parent: Services
+last_reviewed_on: 2026-08-12
+review_in: 24 weeks
 ---
 
 # <%= current_page.data.title %>
@@ -13,25 +15,7 @@ The app follows the [standard pattern](documentation/guides/standard-pattern).
 
 ## Architecture Overview
 
-```mermaid
-graph TD;
-    User[Mobile App]
-    ALB[Application Load Balancer]
-    Backend[ECS - Quit Smoking CMS]
-    NHSLogin[ECS - NHS Login Backend]
-    RDS[Aurora PostgreSQL]
-    Redis[Elasticache Redis]
-    MediaCloudfront[Static assets Cloudfront]
-    MediaS3[S3 Media Bucket]
-    NHSAuth[NHS Login / PDS APIs]
-
-    User --> ALB --> Backend --> RDS
-    User --> MediaCloudfront --> MediaS3
-    Backend --> MediaS3
-    ALB --> NHSLogin --> RDS
-    NHSLogin --> Redis
-    NHSLogin --> NHSAuth
-```
+![Standard pattern architecture](/images/standard-pattern-architecture.png)
 
 ---
 
@@ -69,5 +53,3 @@ Subdomains:
 
 - smokefreedays-dev.phedigital.co.uk / -staging / -prod – Primary ALB entrypoints for each environment.
 - dev.quitsmoking.betterhealthapps.com / staging / prod – NHS Login backend endpoints.
-
-If any hosted zone is recreated, be sure to refresh the glue/NS records in the phe-prd root zones so the delegation chain stays healthy.

@@ -1,7 +1,7 @@
 ---
 title: Couch to 5K
 parent: Services
-last_reviewed_on: 2026-01-29
+last_reviewed_on: 2026-08-12
 review_in: 24 weeks
 ---
 
@@ -13,31 +13,15 @@ The app follows the [standard pattern](documentation/guides/standard-pattern) bu
 
 ## Architecture Overview
 
-```mermaid
-graph TD;
-    User[Mobile App]
-    CloudFront[CloudFront CDN]
-    MediaS3[S3 Media Bucket]
-    ALB[Application Load Balancer]
-    CMS[ECS Fargate - Django API]
-    BuddyRun[ECS Fargate]
-    Redis[BuddyRun Redis]
-    RDS[Aurora PostgreSQL]
-
-    User --> CloudFront --> MediaS3
-    CMS --> MediaS3
-    User --> ALB --> CMS --> RDS
-    CMS --> Secrets
-    User --> ALB --> BuddyRun
-    BuddyRun --> Redis
-```
+![Standard pattern architecture](/images/couchto5k-architecture.png)
 
 ## Components
 
 ### Applications
 
-- CMS – https://github.com/ukhsa-collaboration/couch25k_cloudformation_iaas
-- BuddyRun - https://github.com/ukhsa-collaboration/couch-to-5k-buddy-run
+- **Repo:** [couch25k_cloudformation_iaas](https://github.com/ukhsa-collaboration/couch25k_cloudformation_iaas) – Django CMS mobile client.
+- **Repo:** [couch-to-5k-buddy-run](https://github.com/ukhsa-collaboration/couch-to-5k-buddy-run) – BuddyRun ECS service.
+- **Repo:** [couch25k-nhs-login-backend](https://github.com/ukhsa-collaboration/couch25k-nhs-login-backend) – FastAPI service that syncs data.
 
 ### Infrastructure as Code (IaC)
 
