@@ -215,7 +215,7 @@
 <h3 id="how-should-i-organise-my-terraform-stacks">How should I organise my Terraform stacks?</h3>
 <p>There’s no one-size-fits-all approach to organising Terraform stacks. The goal is to strike a balance between reducing blast radius and keeping tightly coupled resources in the same stack to allow Terraform to manage dependencies more effectively.</p>
 <p>In general, try to group related infrastructure (e.g. networking, compute, storage) into standalone stacks, isolate application deployments into their own stacks (e.g. frontend, backend) unless they are very tightly coupled and avoid creating overly granular stacks that add complexity without meaningful isolation benefits.</p>
-<h3 id="i-have-a-stack-stack-x-that-depends-on-a-resource-in-another-stack-stack-y-how-do-i-ensure-that-the-resource-in-stack-x-gets-created-before-stack-y">I have a Stack (Stack X) that depends on a resource in another Stack (Stack Y). How do I ensure that the resource in Stack X gets created before Stack Y?</h3>
+<h3 id="i-have-a-stack-stack-x-that-depends-on-a-resource-in-another-stack-stack-y-how-do-i-ensure-that-the-resource-in-stack-y-gets-created-before-stack-x">I have a stack (Stack X) that depends on a resource in another stack (Stack Y). How do I ensure that the resource in Stack Y gets created before Stack X?</h3>
 <p>Use the <code>dependencies.json</code> file inside Stack X to declare Stack Y as a dependency. For example:</p>
 <div class="highlight"><pre class="highlight json" tabindex="0"><code><span class="p">{</span><span class="w">
     </span><span class="nl">"dependencies"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">

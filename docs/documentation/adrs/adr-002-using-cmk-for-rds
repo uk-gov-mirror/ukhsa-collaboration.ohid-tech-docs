@@ -6,17 +6,17 @@
 
 ## Context
 
-We current use AWS managed keys to encrypt our RDS databases. This means that AWS manages the encryption keys for us, and we do not have direct control over them. 
+We currently use AWS managed keys to encrypt our RDS databases. This means that AWS manages the encryption keys for us, and we do not have direct control over them.
 
-Using AWS managed keys is a convenient option, but it may not meet our security requirements as we begin to handle more sensitive data.  
+Using AWS managed keys is a convenient option, but it may not meet our security requirements as we begin to handle more sensitive data.
 
-By using customer managed keys (CMK), we can have more control over the encryption keys and ensure that they are properly secured. 
+By using customer managed keys (CMK), we can have more control over the encryption keys and ensure that they are properly secured.
 
 Due to technical limitations of the AWS Backup service, the default AWS managed keys cannot be used to backup RDS clusters. By using customer managed keys, we can ensure that our RDS clusters can be backed up using AWS Backup, which is a critical part of our disaster recovery strategy.
 
 ## Decision
 
-We will use customer managed keys (CMK) to encrypt our RDS databases. This will allow us to have more control over the encryption keys and ensure that they are properly secured. 
+We will use customer managed keys (CMK) to encrypt our RDS databases. This will allow us to have more control over the encryption keys and ensure that they are properly secured.
 
 ## Alternatives Considered
 
