@@ -46,7 +46,7 @@ The backend API data flow is documented below but is subject to change as the ap
 | Environment | URL                                 | Notes |
 |-------------|-------------------------------------|-------|
 | **Production** | https://prd.active10.betterhealthapps.com/  |
-| **Staging**     | https://uat.active10.betterhealthapps.com/ |
+| **UAT**         | https://uat.active10.betterhealthapps.com/ |
 | **Dev**     | https://dev.active10.betterhealthapps.com/     |
 
 ## DNS Overview
@@ -62,58 +62,7 @@ Both domains are registered in the phe-prd AWS account. The authoritative name s
 | Production (iOS) | prd.active10.betterhealthapps.com | active10.prod.phedigital.co.uk |
 | Production (Android) | prd.active10.betterhealthapps.com | cms.phedigital.co.uk |
 
-**Note:** In production, iOS and Android use different CMS domains even though they point to the same CMS. The reasoning behind this isn't known.
-
-
-```mermaid
-graph TD
-  %% Root hosted zones in phe-prd
-  subgraph PHE_PRD[phe-prd account - root hosted zones]
-    BHA[betterhealthapps.com - Hosted Zone];
-    PHE[phedigital.co.uk - Hosted Zone];
-  end
-
-  %% Environment accounts with their delegated zones and ALBs
-  subgraph DEV_ACC[dev account]
-    DEV_BHA[dev.active10.betterhealthapps.com - Hosted Zone];
-    DEV_PHE[active10.dev.phedigital.co.uk - Hosted Zone];
-    ALB_DEV[ALB - dev];
-  end
-
-  subgraph UAT_ACC[uat account]
-    UAT_BHA[uat.active10.betterhealthapps.com - Hosted Zone];
-    UAT_PHE[active10.stg.phedigital.co.uk - Hosted Zone];
-    ALB_UAT[ALB - uat];
-  end
-
-  subgraph PRD_ACC[prd account]
-    PRD_BHA[prd.active10.betterhealthapps.com - Hosted Zone];
-    PRD_PHE[active10.prod.phedigital.co.uk - Hosted Zone];
-    CMS_PHE[cms.phedigital.co.uk - Hosted Zone];
-    ALB_PRD[ALB - prd];
-  end
-
-  %% NS delegations from root zones to env zones
-  BHA -->|NS delegate| DEV_BHA;
-  BHA -->|NS delegate| UAT_BHA;
-  BHA -->|NS delegate| PRD_BHA;
-
-  PHE -->|NS delegate| DEV_PHE;
-  PHE -->|NS delegate| UAT_PHE;
-  PHE -->|NS delegate| PRD_PHE;
-  PHE -->|NS delegate| CMS_PHE;
-
-  %% Env zones alias to their environment ALB
-  DEV_BHA -->|ALIAS A| ALB_DEV;
-  DEV_PHE -->|ALIAS A| ALB_DEV;
-
-  UAT_BHA -->|ALIAS A| ALB_UAT;
-  UAT_PHE -->|ALIAS A| ALB_UAT;
-
-  PRD_BHA -->|ALIAS A| ALB_PRD;
-  PRD_PHE -->|ALIAS A - iOS| ALB_PRD;
-  CMS_PHE -->|ALIAS A - Android| ALB_PRD;
-```
+**Note:** In production, iOS and Android use different CMS domains even though they point to the same CMS. The historical reason for this split has not been confirmed.
 
 Each environment (account) manages its own hosted zone via Terraform.
 
