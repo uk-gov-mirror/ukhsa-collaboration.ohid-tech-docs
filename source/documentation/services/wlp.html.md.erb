@@ -1,6 +1,8 @@
 ---
 title: Weight Loss Plan
 parent: Services
+last_reviewed_on: 2026-08-12
+review_in: 24 weeks
 ---
 
 # <%= current_page.data.title %>
@@ -11,29 +13,7 @@ The app follows the [standard pattern](documentation/guides/standard-pattern). I
 
 ## Architecture Overview
 
-```mermaid
-graph TD;
-    User[User Request]
-    CloudFront[CloudFront CDN]
-    S3Media[S3 Media Bucket]
-    StaticAssets[S3 StaticAssets Bucket]
-    ALB[Application Load Balancer]
-    ECS[ECS Fargate - Django CMS/API]
-    RDS[Aurora PostgreSQL]
-    OpenSearch[Amazon OpenSearch]
-    Firebase[Firebase / Push Services]
-    SurveyMonkey[SurveyMonkey API]
-    Secrets[Secrets Manager / SSM]
-
-    User --> CloudFront --> S3Media
-    User --> CloudFront --> StaticAssets
-    User --> ALB --> ECS --> RDS
-    ECS --> OpenSearch
-    ECS --> S3Media
-    ECS --> Firebase
-    ECS --> SurveyMonkey
-    ECS --> Secrets
-```
+![Standard pattern architecture](/images/standard-pattern-architecture.png)
 
 ## Components
 
@@ -63,48 +43,3 @@ Subdomains:
 
 - weightloss-cms-prd.phedigital.co.uk / -stg / -dev – CMS and API entrypoints (ALB).
 - cdn.weightloss-cms-prod.phedigital.co.uk / cdn.weightloss-cms-stg.phedigital.co.uk / cdn.weightloss-cms-dev.phedigital.co.uk – CloudFront distributions that front the S3 media bucket.
-
-```mermaid
-graph TD
-  subgraph PHE_PRD[phedigital.co.uk – phe-prd account]
-    ROOT[phedigital.co.uk Root Zone]
-  end
-
-  subgraph DEV_ACC[dev account]
-    DEV_CMS[weightloss-cms-dev.phedigital.co.uk]
-    DEV_CDN[cdn.weightloss-cms-dev.phedigital.co.uk]
-    ALB_DEV[ALB - dev]
-    CF_DEV[CloudFront - dev]
-  end
-
-  subgraph STG_ACC[stg account]
-    STG_CMS[weightloss-cms-stg.phedigital.co.uk]
-    STG_CDN[cdn.weightloss-cms-stg.phedigital.co.uk]
-    ALB_STG[ALB - stg]
-    CF_STG[CloudFront - stg]
-  end
-
-  subgraph PRD_ACC[prd account]
-    PRD_CMS[weightloss-cms-prd.phedigital.co.uk]
-    PRD_CDN[cdn.weightloss-cms-prod.phedigital.co.uk]
-    ALB_PRD[ALB - prd]
-    CF_PRD[CloudFront - prd]
-  end
-
-  ROOT -->|NS| DEV_CMS
-  ROOT -->|NS| STG_CMS
-  ROOT -->|NS| PRD_CMS
-  ROOT -->|NS| DEV_CDN
-  ROOT -->|NS| STG_CDN
-  ROOT -->|NS| PRD_CDN
-
-  DEV_CMS --> ALB_DEV
-  STG_CMS --> ALB_STG
-  PRD_CMS --> ALB_PRD
-
-  DEV_CDN --> CF_DEV
-  STG_CDN --> CF_STG
-  PRD_CDN --> CF_PRD
-```
-
-If a hosted zone is recreated, update the NS entries held in the phe-prd root zone so delegation stays correct.
