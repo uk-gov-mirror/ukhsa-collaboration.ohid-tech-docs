@@ -120,28 +120,8 @@
 <p>Weight Loss Plan helps make healthier food choices, set weight loss goals to helps users get more active and burn more calories.</p>
 <p>The app follows the <a href="../guides/standard-pattern.html">standard pattern</a>. It uses a Static Assets S3 bucket to pull information using its &ldquo;Calorie Search&rdquo; function. The name of this bucket is hardcoded into the mobile app which makes replacing it more difficult.</p>
 <h2 id="architecture-overview">Architecture Overview</h2>
-<div class="highlight"><pre class="highlight plaintext" tabindex="0"><code>graph TD;
-    User[User Request]
-    CloudFront[CloudFront CDN]
-    S3Media[S3 Media Bucket]
-    StaticAssets[S3 StaticAssets Bucket]
-    ALB[Application Load Balancer]
-    ECS[ECS Fargate - Django CMS/API]
-    RDS[Aurora PostgreSQL]
-    OpenSearch[Amazon OpenSearch]
-    Firebase[Firebase / Push Services]
-    SurveyMonkey[SurveyMonkey API]
-    Secrets[Secrets Manager / SSM]
-
-    User --&gt; CloudFront --&gt; S3Media
-    User --&gt; CloudFront --&gt; StaticAssets
-    User --&gt; ALB --&gt; ECS --&gt; RDS
-    ECS --&gt; OpenSearch
-    ECS --&gt; S3Media
-    ECS --&gt; Firebase
-    ECS --&gt; SurveyMonkey
-    ECS --&gt; Secrets
-</code></pre></div><h2 id="components">Components</h2>
+<p><a href="../../images/standard-pattern-architecture.png" rel="noopener noreferrer"><img src="../../images/standard-pattern-architecture.png" alt="Standard pattern architecture" /></a></p>
+<h2 id="components">Components</h2>
 <h3 id="applications">Applications</h3>
 
 <ul>
@@ -183,49 +163,21 @@
 <li>weightloss-cms-prd.phedigital.co.uk / -stg / -dev – CMS and API entrypoints (ALB).</li>
 <li>cdn.weightloss-cms-prod.phedigital.co.uk / cdn.weightloss-cms-stg.phedigital.co.uk / cdn.weightloss-cms-dev.phedigital.co.uk – CloudFront distributions that front the S3 media bucket.</li>
 </ul>
-<div class="highlight"><pre class="highlight plaintext" tabindex="0"><code>graph TD
-  subgraph PHE_PRD[phedigital.co.uk – phe-prd account]
-    ROOT[phedigital.co.uk Root Zone]
-  end
 
-  subgraph DEV_ACC[dev account]
-    DEV_CMS[weightloss-cms-dev.phedigital.co.uk]
-    DEV_CDN[cdn.weightloss-cms-dev.phedigital.co.uk]
-    ALB_DEV[ALB - dev]
-    CF_DEV[CloudFront - dev]
-  end
+              <div data-module='page-expiry' data-last-reviewed-on="2027-01-27">
+    <div class='page-expiry--not-expired'>
+      This page was last reviewed on 12 August 2026.
 
-  subgraph STG_ACC[stg account]
-    STG_CMS[weightloss-cms-stg.phedigital.co.uk]
-    STG_CDN[cdn.weightloss-cms-stg.phedigital.co.uk]
-    ALB_STG[ALB - stg]
-    CF_STG[CloudFront - stg]
-  end
+        It needs to be reviewed again on 27 January 2027
+.
+    </div>
 
-  subgraph PRD_ACC[prd account]
-    PRD_CMS[weightloss-cms-prd.phedigital.co.uk]
-    PRD_CDN[cdn.weightloss-cms-prod.phedigital.co.uk]
-    ALB_PRD[ALB - prd]
-    CF_PRD[CloudFront - prd]
-  end
+    <div class='page-expiry--expired'>
+      This page was set to be reviewed before 27 January 2027.
+      This might mean the content is out of date.
+    </div>
+  </div>
 
-  ROOT --&gt;|NS| DEV_CMS
-  ROOT --&gt;|NS| STG_CMS
-  ROOT --&gt;|NS| PRD_CMS
-  ROOT --&gt;|NS| DEV_CDN
-  ROOT --&gt;|NS| STG_CDN
-  ROOT --&gt;|NS| PRD_CDN
-
-  DEV_CMS --&gt; ALB_DEV
-  STG_CMS --&gt; ALB_STG
-  PRD_CMS --&gt; ALB_PRD
-
-  DEV_CDN --&gt; CF_DEV
-  STG_CDN --&gt; CF_STG
-  PRD_CDN --&gt; CF_PRD
-</code></pre></div><p>If a hosted zone is recreated, update the NS entries held in the phe-prd root zone so delegation stays correct.</p>
-
-            
           </main>
 
           <aside>

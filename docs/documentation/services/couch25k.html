@@ -120,28 +120,14 @@
 <p>Couch to 5K is the Better Health running coach app.</p>
 <p>The app follows the <a href="../guides/standard-pattern.html">standard pattern</a> but also has a BuddyRun feature which runs in a separate ECS container and uses Redis. This uses WebSockets through the ALB instead of HTTP.</p>
 <h2 id="architecture-overview">Architecture Overview</h2>
-<div class="highlight"><pre class="highlight plaintext" tabindex="0"><code>graph TD;
-    User[Mobile App]
-    CloudFront[CloudFront CDN]
-    MediaS3[S3 Media Bucket]
-    ALB[Application Load Balancer]
-    CMS[ECS Fargate - Django API]
-    BuddyRun[ECS Fargate]
-    Redis[BuddyRun Redis]
-    RDS[Aurora PostgreSQL]
-
-    User --&gt; CloudFront --&gt; MediaS3
-    CMS --&gt; MediaS3
-    User --&gt; ALB --&gt; CMS --&gt; RDS
-    CMS --&gt; Secrets
-    User --&gt; ALB --&gt; BuddyRun
-    BuddyRun --&gt; Redis
-</code></pre></div><h2 id="components">Components</h2>
+<p><a href="../../images/couchto5k-architecture.png" rel="noopener noreferrer"><img src="../../images/couchto5k-architecture.png" alt="Standard pattern architecture" /></a></p>
+<h2 id="components">Components</h2>
 <h3 id="applications">Applications</h3>
 
 <ul>
-<li>CMS – https://github.com/ukhsa-collaboration/couch25k_cloudformation_iaas</li>
-<li>BuddyRun - https://github.com/ukhsa-collaboration/couch-to-5k-buddy-run</li>
+<li><strong>Repo:</strong> <a href="https://github.com/ukhsa-collaboration/couch25k_cloudformation_iaas">couch25k_cloudformation_iaas</a> – Django CMS mobile client.</li>
+<li><strong>Repo:</strong> <a href="https://github.com/ukhsa-collaboration/couch-to-5k-buddy-run">couch-to-5k-buddy-run</a> – BuddyRun ECS service.</li>
+<li><strong>Repo:</strong> <a href="https://github.com/ukhsa-collaboration/couch25k-nhs-login-backend">couch25k-nhs-login-backend</a> – FastAPI service that syncs data.</li>
 </ul>
 <h3 id="infrastructure-as-code-iac">Infrastructure as Code (IaC)</h3>
 
@@ -245,16 +231,16 @@ aws ecs run-task <span class="se">\</span>
     <span class="s2">"awsvpcConfiguration={subnets=[</span><span class="nv">$SUBNET</span><span class="s2">],securityGroups=[</span><span class="nv">$SECURITY_GROUP</span><span class="s2">],assignPublicIp=DISABLED}"</span>
 </code></pre></div><p>Once the container is no longer needed, it should be stopped to avoid unnecessary costs. This can be done through the AWS Console.</p>
 
-              <div data-module='page-expiry' data-last-reviewed-on="2026-07-16">
+              <div data-module='page-expiry' data-last-reviewed-on="2027-01-27">
     <div class='page-expiry--not-expired'>
-      This page was last reviewed on 29 January 2026.
+      This page was last reviewed on 12 August 2026.
 
-        It needs to be reviewed again on 16 July 2026
+        It needs to be reviewed again on 27 January 2027
 .
     </div>
 
     <div class='page-expiry--expired'>
-      This page was set to be reviewed before 16 July 2026.
+      This page was set to be reviewed before 27 January 2027.
       This might mean the content is out of date.
     </div>
   </div>

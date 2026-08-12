@@ -122,24 +122,8 @@
 
 <hr>
 <h2 id="architecture-overview">Architecture Overview</h2>
-<div class="highlight"><pre class="highlight plaintext" tabindex="0"><code>graph TD;
-    User[Mobile App]
-    ALB[Application Load Balancer]
-    Backend[ECS - Quit Smoking CMS]
-    NHSLogin[ECS - NHS Login Backend]
-    RDS[Aurora PostgreSQL]
-    Redis[Elasticache Redis]
-    MediaCloudfront[Static assets Cloudfront]
-    MediaS3[S3 Media Bucket]
-    NHSAuth[NHS Login / PDS APIs]
+<p><a href="../../images/standard-pattern-architecture.png" rel="noopener noreferrer"><img src="../../images/standard-pattern-architecture.png" alt="Standard pattern architecture" /></a></p>
 
-    User --&gt; ALB --&gt; Backend --&gt; RDS
-    User --&gt; MediaCloudfront --&gt; MediaS3
-    Backend --&gt; MediaS3
-    ALB --&gt; NHSLogin --&gt; RDS
-    NHSLogin --&gt; Redis
-    NHSLogin --&gt; NHSAuth
-</code></pre></div>
 <hr>
 <h2 id="components">Components</h2>
 <h3 id="applications">Applications</h3>
@@ -191,9 +175,21 @@
 <li>smokefreedays-dev.phedigital.co.uk / -staging / -prod – Primary ALB entrypoints for each environment.</li>
 <li>dev.quitsmoking.betterhealthapps.com / staging / prod – NHS Login backend endpoints.</li>
 </ul>
-<p>If any hosted zone is recreated, be sure to refresh the glue/NS records in the phe-prd root zones so the delegation chain stays healthy.</p>
 
-            
+              <div data-module='page-expiry' data-last-reviewed-on="2027-01-27">
+    <div class='page-expiry--not-expired'>
+      This page was last reviewed on 12 August 2026.
+
+        It needs to be reviewed again on 27 January 2027
+.
+    </div>
+
+    <div class='page-expiry--expired'>
+      This page was set to be reviewed before 27 January 2027.
+      This might mean the content is out of date.
+    </div>
+  </div>
+
           </main>
 
           <aside>

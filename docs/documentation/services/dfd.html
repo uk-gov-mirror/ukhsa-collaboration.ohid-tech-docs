@@ -122,24 +122,8 @@
 
 <hr>
 <h2 id="architecture-overview">Architecture Overview</h2>
-<div class="highlight"><pre class="highlight plaintext" tabindex="0"><code>graph TD;
-    User[Mobile App]
-    ALB[Application Load Balancer]
-    Backend[ECS - Drink Free Days CMS]
-    NHSLogin[ECS - NHS Login Backend]
-    RDS[Aurora PostgreSQL]
-    Redis[Elasticache Redis]
-    MediaCloudfront[Static assets Cloudfront]
-    MediaS3[S3 Media Bucket]
-    NHSAuth[NHS Login / PDS APIs]
+<p><a href="../../images/standard-pattern-architecture.png" rel="noopener noreferrer"><img src="../../images/standard-pattern-architecture.png" alt="Standard pattern architecture" /></a></p>
 
-    User --&gt; ALB --&gt; Backend --&gt; RDS
-    User --&gt; MediaCloudfront --&gt; MediaS3
-    Backend --&gt; MediaS3
-    ALB --&gt; NHSLogin --&gt; RDS
-    NHSLogin --&gt; Redis
-    NHSLogin --&gt; NHSAuth
-</code></pre></div>
 <hr>
 <h2 id="components">Components</h2>
 <h3 id="applications">Applications</h3>
@@ -191,58 +175,17 @@
 <li>drinkfreedays-dev.phedigital.co.uk / -staging / -prod – Primary ALB entrypoints for each environment.</li>
 <li>dev.quitsmoking.betterhealthapps.com / staging / prod – NHS Login backend endpoints.</li>
 </ul>
-<div class="highlight"><pre class="highlight plaintext" tabindex="0"><code>graph TD
-  subgraph PHE_PRD[phe-prd account]
-    PHE[phedigital.co.uk]
-    BHA[betterhealthapps.com]
-  end
 
-  subgraph DEV_ACC[dev account]
-    DEV_API[dfd-dev.phedigital.co.uk]
-    DEV_NHS[dev.quitsmoking.betterhealthapps.com]
-    ALB_DEV[ALB - dev]
-  end
-
-  subgraph STG_ACC[staging account]
-    STG_API[dfd-pre-stg.phedigital.co.uk]
-    STG_NHS[staging.quitsmoking.betterhealthapps.com]
-    ALB_STG[ALB - staging]
-  end
-
-  subgraph PRD_ACC[prd account]
-    PRD_API[dfd-prod-cms.phedigital.co.uk]
-    PRD_NHS[prod.quitsmoking.betterhealthapps.com]
-    ALB_PRD[ALB - prod]
-  end
-
-  PHE --&gt;|NS| DEV_API
-  PHE --&gt;|NS| STG_API
-  PHE --&gt;|NS| PRD_API
-
-  BHA --&gt;|NS| DEV_NHS
-  BHA --&gt;|NS| STG_NHS
-  BHA --&gt;|NS| PRD_NHS
-
-  DEV_API --&gt; ALB_DEV
-  DEV_NHS --&gt; ALB_DEV
-
-  STG_API --&gt; ALB_STG
-  STG_NHS --&gt; ALB_STG
-
-  PRD_API --&gt; ALB_PRD
-  PRD_NHS --&gt; ALB_PRD
-</code></pre></div><p>If any hosted zone is recreated, be sure to refresh the glue/NS records in the phe-prd root zones so the delegation chain stays healthy.</p>
-
-              <div data-module='page-expiry' data-last-reviewed-on="2026-07-16">
+              <div data-module='page-expiry' data-last-reviewed-on="2027-01-27">
     <div class='page-expiry--not-expired'>
-      This page was last reviewed on 29 January 2026.
+      This page was last reviewed on 12 August 2026.
 
-        It needs to be reviewed again on 16 July 2026
+        It needs to be reviewed again on 27 January 2027
 .
     </div>
 
     <div class='page-expiry--expired'>
-      This page was set to be reviewed before 16 July 2026.
+      This page was set to be reviewed before 27 January 2027.
       This might mean the content is out of date.
     </div>
   </div>
