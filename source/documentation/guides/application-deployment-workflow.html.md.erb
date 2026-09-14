@@ -82,7 +82,7 @@ The below diagram demonstrates the sequence of events needed to deploy a feature
 
 ## Troubleshooting
 
-- **"Review deployments" button missing:** You likely do not have permission for that environment. Contact your team to request access or elevation.
+- **"Review deployments" button missing:** You likely do not have permission for that environment. You might need to raise a ServiceNow request to be added to the correct Github teams.
 - **Workflow failed before reaching approval:** Fix the failure (build error, test failure, linting issue) and re-run the workflow from the Actions tab before requesting approval.
 - **Environment variables missing in deployed application:** Update Infrastructure as Code (Terraform task definition) first. The ECS task definition must include environment variables before the application is deployed; otherwise the deployment will fail.
 - **Smoke tests or post-deploy tests failing:** Review the test output in the workflow logs. Common causes include network connectivity issues, incorrect base URLs, or application health issues. Fix the application or test configuration and re-run.
