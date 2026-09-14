@@ -74,6 +74,68 @@ Applications use the container image build and deploy workflow from `devops-appl
 
 See the [`devops-application-cicd` documentation](https://github.com/ukhsa-collaboration/devops-application-cicd/blob/main/docs/container-image-build-python-aws-ecs.md) for workflow inputs, deployment environment schema, and example configurations.
 
+## IAM Roles and OIDC Authentication
+
+The CI/CD pipeline uses AWS IAM roles with OpenID Connect (OIDC) trust relationships to authenticate from GitHub Actions without storing long-lived AWS credentials. Two types of roles are required:
+
+### ECR Registry Role (Per Repository)
+
+A single IAM role per repository is used to push container images to the centralised ECR registry:
+
+- **Account:** The central AWS registry account
+- **Permissions:** Push images to ECR, tag images, sign images (if enabled)
+- **Trust relationship:** Configured to allow assumption from your GitHub repository using OIDC
+- **Setup responsibility:** Automatically configured by the `ohid-aws-landing-zone` infrastructure. No manual configuration required for individual repositories.
+- **Workflow configuration:** The workflow automatically discovers this role using `registry_account_id` + `aws_registry_role_name` (defaults to `github-ecr`), or you can explicitly provide the role ARN via `aws_registry_role_to_assume`
+
+### Deployment Roles (Per Service, Per Environment)
+
+A separate IAM role per service and environment is used to deploy to AWS ECS:
+
+- **Account:** The workload AWS account for each environment (Dev, Staging, Prod)
+- **Permissions:** Update ECS task definitions, update ECS services, write to SSM Parameter Store, pull images from central ECR
+- **Trust relationship:** Must allow assumption from your GitHub repository using OIDC
+- **Setup responsibility:** Each service's Terraform code is responsible for creating this role in the workload accounts.
+- **Workflow configuration:** Provide each environment's `aws_account_id` and `aws_deploy_role_name`, or provide the full role ARN via `aws_role_to_assume`. The latter is the preferred approach but requires use of environment-specific secrets.
+
+### OIDC Trust Relationship Setup
+
+The deployment role must have an OIDC trust relationship configured to allow GitHub Actions to assume it. The trust policy must specify:
+
+- **Token issuer:** `https://token.actions.githubusercontent.com`
+- **Repository filter:** Scoped to the specific GitHub repository and branch/ref for that environment. For example:
+  - Dev deployments: `repo:ukhsa-collaboration/<your-repo>:ref:refs/heads/main`
+  - Staging/Prod deployments: Scoped to a release branch or tag (e.g., `repo:ukhsa-collaboration/<your-repo>:ref:refs/tags/v*`)
+- **Audience:** `sts.amazonaws.com`
+
+The ECR registry role's OIDC trust is automatically configured by the `ohid-aws-landing-zone` infrastructure and does not require manual setup.
+
+Example trust policy for deployment role (scoped to main branch for dev environment):
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::<account>:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:ukhsa-collaboration/<repo-name>:ref:refs/heads/main"
+        }
+      }
+    }
+  ]
+}
+```
+
+**Note:** OIDC identity providers must be configured in AWS for the GitHub token issuer before roles can be created. This is typically a one-time setup per AWS account.
+
 ## Architecture
 The below diagram demonstrates the sequence of events needed to deploy a feature, hotfix or bugfix to production. The development begins in the top left corner.
 
@@ -88,9 +150,15 @@ The below diagram demonstrates the sequence of events needed to deploy a feature
 - **Smoke tests or post-deploy tests failing:** Review the test output in the workflow logs. Common causes include network connectivity issues, incorrect base URLs, or application health issues. Fix the application or test configuration and re-run.
 - **Deployment rolled back:** Smoke tests or post-deploy tests failed, triggering an automatic rollback. Check the workflow logs for the exact failure. The image digest is not written to Parameter Store, preventing downstream promotions.
 - **Build or push to ECR failing:** Verify that:
-  - The repository has the required AWS roles configured (`aws_registry_role_name` for ECR access, `aws_deploy_role_name` for ECS deployment).
-  - GitHub Secrets or Org variables contain correct AWS account IDs and role names.
   - The `Dockerfile` exists and builds successfully locally.
+  - The ECR registry role is available (automatically configured by `ohid-aws-landing-zone`).
+  - GitHub workflow has the correct `registry_account_id` and `aws_registry_role_name` configured.
+  - If OIDC trust is misconfigured, the `sts:AssumeRoleWithWebIdentity` call will fail with an access denied error.
+- **Deployment to Staging/Production failing:** Verify that:
+  - Each environment's **deployment role is created by the service's Terraform code**. Check your infrastructure-as-code to ensure the role exists.
+  - The deployment role has OIDC trust configured to allow assumption from your GitHub repository on the main branch.
+  - GitHub workflow has the correct `aws_account_id`, `aws_deploy_role_name`, and `service_identifier` configured for each environment.
+  - The role has permissions to update ECS task definitions, update ECS services, and write to SSM Parameter Store.
 
 ## Rollbacks
 
