@@ -134,7 +134,7 @@ Example trust policy for deployment role (environment-specific):
 }
 ```
 
-**Note:** OIDC identity providers must be configured in AWS for the GitHub token issuer before roles can be created. This is typically a one-time setup per AWS account.
+**Note:** OIDC identity providers must be configured in AWS for the GitHub token issuer before roles can be created. This is typically a one-time setup per AWS account and is done during the Terraform bootstrap process.
 
 ## Architecture
 The below diagram demonstrates the sequence of events needed to deploy a feature, hotfix or bugfix to production. The development begins in the top left corner.
