@@ -103,14 +103,14 @@ A separate IAM role per service and environment is used to deploy to AWS ECS:
 The deployment role must have an OIDC trust relationship configured to allow GitHub Actions to assume it. The trust policy must specify:
 
 - **Token issuer:** `https://token.actions.githubusercontent.com`
-- **Repository filter:** Scoped to the specific GitHub repository and branch/ref for that environment. For example:
-  - Dev deployments: `repo:ukhsa-collaboration/<your-repo>:ref:refs/heads/main`
-  - Staging/Prod deployments: Scoped to a release branch or tag (e.g., `repo:ukhsa-collaboration/<your-repo>:ref:refs/tags/v*`)
+- **Repository filter:** Scoped to the specific GitHub repository and the GitHub Environment that will use it. For example:
+  - Dev deployments: Use GitHub Environment `dev`,
+  - Production deployments: Use GitHub Environment `prd`, scope the ref to your release tag pattern
 - **Audience:** `sts.amazonaws.com`
 
 The ECR registry role's OIDC trust is automatically configured by the `ohid-aws-landing-zone` infrastructure and does not require manual setup.
 
-Example trust policy for deployment role (scoped to main branch for dev environment):
+Example trust policy for deployment role (environment-specific):
 ```json
 {
   "Version": "2012-10-17",
@@ -126,7 +126,7 @@ Example trust policy for deployment role (scoped to main branch for dev environm
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:ukhsa-collaboration/<repo-name>:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub": "repo:ukhsa-collaboration/<repo-name>:environment:<ENVIRONMENT_NAME>:ref:<ENVIRONMENT_REF>"
         }
       }
     }
