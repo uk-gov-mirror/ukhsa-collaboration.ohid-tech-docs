@@ -34,20 +34,20 @@ The standard development and deployment workflow is as follows:
 
 The deployment system uses a container-based architecture:
 
-- **Build Stage:** Docker container image is built, linted (Dockerfile + Python), and tested locally
-- **Registry Stage:** On main branch, the image is pushed to the centralised ECR repository with an immutable digest reference
-- **Deployment Stage:** The image is deployed to AWS ECS services in each configured environment
-- **Verification Stage:** Lightweight smoke tests (HTTP health checks) and optional comprehensive post-deploy tests run against each deployed environment
+- Build Stage: Dockerfile and application code are linted. Container is built and unit tests run locally on the Github Runner
+- Registry Stage: On main branch, the image is pushed to the centralised ECR repository with an immutable digest reference
+- Deployment Stage: The image is deployed to AWS ECS services in each configured environment
+- Verification Stage: Lightweight smoke tests (HTTP health checks) and optional comprehensive post-deploy tests run against the deployed environment
 
-If smoke tests or post-deploy tests fail, the deployment is rolled back and the image is not promoted to downstream environments.
+If smoke tests or post-deploy tests fail, the deployment is automatically rolled back by ECS and the image is not promoted to downstream environments.
 
 ## Environments and Approvals
 
 Applications typically deploy to multiple environments with different approval requirements:
 
 - Development: Automatic deployment on merge to main.
-- Staging: Manual approval required (GitHub Environments gate the job).
-- Production: Manual approval required, typically by a team member with elevated permissions.
+- Staging: Manual approval required but can be approved by the person who merged the change
+- Production: Manual approval required but reviewer must be someone other than the person who merged the change
 
 GitHub Environments enforce these approvals at the workflow job level.
 
@@ -83,10 +83,10 @@ The CI/CD pipeline uses AWS IAM roles with OpenID Connect (OIDC) trust relations
 A single IAM role per repository is used to push container images to the centralised ECR registry:
 
 - **Account:** The central AWS registry account
-- **Permissions:** Push images to ECR, tag images, sign images (if enabled)
-- **Trust relationship:** Configured to allow assumption from your GitHub repository using OIDC
+- **Permissions:** Push images to ECR, tag images
+- **Trust relationship:** Configured to allow assumption from your application code GitHub repository using OIDC
 - **Setup responsibility:** Automatically configured by the `ohid-aws-landing-zone` infrastructure. No manual configuration required for individual repositories.
-- **Workflow configuration:** The workflow automatically discovers this role using `registry_account_id` + `aws_registry_role_name` (defaults to `github-ecr`), or you can explicitly provide the role ARN via `aws_registry_role_to_assume`
+- **Workflow configuration:** The workflow automatically discovers this role using `registry_account_id` + `aws_registry_role_name` or you can explicitly provide the role ARN via `aws_registry_role_to_assume`
 
 ### Deployment Roles (Per Service, Per Environment)
 
@@ -94,7 +94,7 @@ A separate IAM role per service and environment is used to deploy to AWS ECS:
 
 - **Account:** The workload AWS account for each environment (Dev, Staging, Prod)
 - **Permissions:** Update ECS task definitions, update ECS services, write to SSM Parameter Store, pull images from central ECR
-- **Trust relationship:** Must allow assumption from your GitHub repository using OIDC
+- **Trust relationship:** Must allow assumption from your application code GitHub repositories using OIDC
 - **Setup responsibility:** Each service's Terraform code is responsible for creating this role in the workload accounts.
 - **Workflow configuration:** Provide each environment's `aws_account_id` and `aws_deploy_role_name`, or provide the full role ARN via `aws_role_to_assume`. The latter is the preferred approach but requires use of environment-specific secrets.
 
