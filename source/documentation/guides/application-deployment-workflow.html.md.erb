@@ -154,11 +154,6 @@ The below diagram demonstrates the sequence of events needed to deploy a feature
   - The ECR registry role is available (automatically configured by `ohid-aws-landing-zone`).
   - GitHub workflow has the correct `registry_account_id` and `aws_registry_role_name` configured.
   - If OIDC trust is misconfigured, the `sts:AssumeRoleWithWebIdentity` call will fail with an access denied error.
-- **Deployment to Staging/Production failing:** Verify that:
-  - Each environment's **deployment role is created by the service's Terraform code**. Check your infrastructure-as-code to ensure the role exists.
-  - The deployment role has OIDC trust configured to allow assumption from your GitHub repository on the main branch.
-  - GitHub workflow has the correct `aws_account_id`, `aws_deploy_role_name`, and `service_identifier` configured for each environment.
-  - The role has permissions to update ECS task definitions, update ECS services, and write to SSM Parameter Store.
 
 ## Rollbacks
 
