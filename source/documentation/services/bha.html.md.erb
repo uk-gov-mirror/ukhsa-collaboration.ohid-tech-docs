@@ -33,3 +33,7 @@ Further implementation details will be documented as the implementation is confi
 ## Architecture Overview
 
 ![Better Health Auth architecture diagram](/images/bha-architecture.png)
+
+### High-level architecture
+
+Keycloak will run as containerised tasks on Amazon ECS using AWS Fargate across three availability zones to support high availability. Embedded Infinispan will provide distributed caching for authentication state and session data, allowing instances to access cached state across the cluster and reducing database access. In production mode, instances automatically discover and join the cluster using the configured discovery mechanism. With the default `jdbc-ping` stack, discovery uses the shared database, and instances require TCP connectivity on ports 7800 for cluster data and 57800 for failure detection. See the [Keycloak caching documentation](https://www.keycloak.org/server/caching) for details.
